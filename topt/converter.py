@@ -1,5 +1,4 @@
-"""
-Methods to convert complex-valued arrays into their real-valued counterparts.
+"""Methods to convert complex-valued arrays into their real-valued counterparts.
 
 Vector: v = v_R + i v_I --> [ v_R, v_I ]
 
