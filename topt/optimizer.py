@@ -81,7 +81,7 @@ def optimize_trajectory(
     else:
         time_span, time_lb, time_ub = time_span
 
-    # build initial trajectory
+    # build an initial trajectory that satisfies equations of motion
     initial_trajectory = build_trajectory(
         initial_state, initial_params, generator, time_span, num_time_steps, num_static_params
     )
