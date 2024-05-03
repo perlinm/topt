@@ -1,2 +1,4 @@
 # topt
-Tools for trajectory optimization with direct collocation.
+
+This package contains tools for trajectory optimization with direct collocation.
+
