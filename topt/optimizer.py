@@ -300,20 +300,8 @@ def get_dynamical_constraints(
         return np.concatenate([constraints_init, np.array(constraints_bulk).ravel()])
 
     # compute the jacobian of the generator, if necessary
-
     if generator_jac is None:
-
-        def flat_generator(data: Array) -> Array:
-            time = data[0]
-            dynamic_params = data[1:] if not num_static_params else data[1:-num_static_params]
-            static_params = data[-num_static_params:]
-            return generator(time, dynamic_params, static_params).ravel()
-
-        flat_generator_jac = jax.jacfwd(flat_generator)
-
-        def generator_jac(time: ArrayLike, dynamic_params: Array, static_params: Array) -> Array:
-            time = np.array(time, ndmin=1)
-            return flat_generator_jac(np.concatenate([time, dynamic_params, static_params]))
+        generator_jac = get_generator_jac(generator, num_static_params)
 
     # identify columns of the constraint jacobian that are occupied by data at a certain time index
 
@@ -375,6 +363,24 @@ def get_dynamical_constraints(
         "jac": jax.jit(jacobian),
         "hess": lambda _: 0,
     }
+
+
+def get_generator_jac(generator: SplitParamFunc, num_static_params: int) -> SplitParamFunc:
+    """The Jacobian of a generator function."""
+
+    def flat_generator(data: Array) -> Array:
+        time = data[0]
+        dynamic_params = data[1:] if not num_static_params else data[1:-num_static_params]
+        static_params = data[-num_static_params:]
+        return generator(time, dynamic_params, static_params).ravel()
+
+    flat_generator_jac = jax.jacfwd(flat_generator)
+
+    def generator_jac(time: ArrayLike, dynamic_params: Array, static_params: Array) -> Array:
+        time = np.array(time, ndmin=1)
+        return flat_generator_jac(np.concatenate([time, dynamic_params, static_params]))
+
+    return generator_jac
 
 
 def get_time_step_constraint(
