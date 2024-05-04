@@ -64,8 +64,6 @@ time_bounds = (0, 1)
 
 initial_state = np.array([1, 0], dtype=complex)
 initial_params = np.array([1, 0, 0], dtype=float)
-# initial_params = np.array([], dtype=float)
-
 num_static_params = 1
 
 
@@ -78,7 +76,7 @@ result = topt.optimizer.optimize_trajectory(
     objective,
     (field_constraint, np.ones(num_time_steps), np.ones(num_time_steps)),
     num_static_params=num_static_params,
-    time_span_bounds=time_bounds,
+    time_bounds=time_bounds,
 )
 states = result.x.states
 dynamic_params = result.x.dynamic_params

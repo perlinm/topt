@@ -43,7 +43,7 @@ def optimize_trajectory(
     objective_grad: SplitTrajectoryFunc | None = None,
     objective_hess: SplitTrajectoryFunc | None = None,
     generator_jac: SplitParamFunc | None = None,
-    time_span_bounds: tuple[float, float] | None = None,
+    time_bounds: tuple[float, float] | None = None,
     tol: float = 1e-4,  # error tolerance passed to IPOPT
 ) -> scipy.optimize.OptimizeResult:
     """Optimize a trajectory with direct collocation.
@@ -70,7 +70,7 @@ def optimize_trajectory(
         objective_grad: the gradient of the objective function.
         objective_hess: the hessian of the objective function.
         generator_jac: the jacobian of the generator of time evolution.
-        time_span_bounds: lower and upper bounds on the allowed time span.  If bounds are not
+        time_bounds: lower and upper bounds on the allowed time span.  If bounds are not
             provided, the time span is constrained to a fixed value.
         tol: an error tolerance passed to IPOPT.
 
@@ -79,7 +79,7 @@ def optimize_trajectory(
     These functions must likewise return an array.
     """
     num_dynamic_params = initial_params.size - num_static_params
-    time_lb, time_ub = time_span_bounds if time_span_bounds is not None else (time_span, time_span)
+    time_lb, time_ub = time_bounds if time_bounds is not None else (time_span, time_span)
 
     # build an initial trajectory that satisfies equations of motion
     initial_trajectory = build_trajectory(
