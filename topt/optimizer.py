@@ -180,6 +180,9 @@ def build_trajectory(
     time_span: ArrayLike,
     num_time_steps: int,
     num_static_params: int,
+    *,
+    rtol: float = 1e-3,  # default for scipy.integrate.solve_ivp
+    atol: float = 1e-6,  # default for scipy.integrate.solve_ivp
 ) -> Array:
     """Build the trajectory of a state satisfying equations of motion."""
     num_dynamic_params = params.size - num_static_params
@@ -191,6 +194,8 @@ def build_trajectory(
         (0, time_span),
         initial_state,
         t_eval=np.linspace(0, time_span, num_time_steps + 1)[1:],
+        rtol=rtol,
+        atol=atol,
     )
     states = result.y.T
 

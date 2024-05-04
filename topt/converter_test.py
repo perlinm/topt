@@ -1,4 +1,4 @@
-"""Unit tests for converter.py"""
+"""Unit tests for converter.py."""
 
 import jax
 
