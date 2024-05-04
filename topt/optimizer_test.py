@@ -127,7 +127,7 @@ def test_dynamical_constraints(
     constraint = constraint_funcs["fun"](trajectory)  # pylint: disable=not-callable
     assert jax.numpy.abs(constraint).max() < time_step**2
 
-    # check derivatives of the constraint function
+    # check correctness of the derivatives of the constraint function
 
     constraint_jac = constraint_funcs["jac"](trajectory)  # pylint: disable=not-callable
     constraint_jac_with_autodiff = jax.jacfwd(constraint_funcs["fun"])(trajectory)
