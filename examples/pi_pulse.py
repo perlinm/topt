@@ -24,6 +24,7 @@ jax.config.update("jax_platform_name", "cpu")
 
 
 def generator(time: ArrayLike, dynamic_params: Array, static_params: Array) -> Array:
+    """Generator for constant axial (Z) field and dynamic transverse (XY) field."""
     op_I = np.identity(2, dtype=complex)
     op_z = np.array([[1, 0], [0, -1]], dtype=complex)
     op_x = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -44,6 +45,7 @@ def generator(time: ArrayLike, dynamic_params: Array, static_params: Array) -> A
 def objective(
     states: Array, dynamic_params: Array, static_params: Array, time_span: Array
 ) -> Array:
+    """Objective to minimize: population of the |0> state."""
     last_state = topt.converter.real_to_complex_vec(states[-1, :])
     pop_0 = np.abs(last_state[0]) ** 2
     return pop_0
@@ -52,6 +54,7 @@ def objective(
 def field_constraint(
     states: Array, dynamic_params: Array, static_params: Array, time_span: Array
 ) -> Array:
+    """Constraint on the magnitude of the transverse (XY) field."""
     return np.linalg.norm(dynamic_params, ord=2, axis=1)
 
 
@@ -82,10 +85,9 @@ static_params = result.x.static_params
 time_span = result.x.time_span
 
 print()
-print(np.abs(topt.real_to_complex_vec(states[-1, :])) ** 2)
+print(np.abs(topt.converter.real_to_complex_vec(states[-1, :])) ** 2)
 print(static_params)
 print(time_span)
-exit()
 print()
 
 times = np.linspace(0, time_span, num_time_steps + 1)
