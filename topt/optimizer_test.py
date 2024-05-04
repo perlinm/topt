@@ -45,7 +45,7 @@ def test_dynamical_constraints(
     mats_static = [jax.random.normal(key, (dim, dim)) for _ in range(num_static_params)]
 
     def generator(time: ArrayLike, dynamic_params: Array, static_params: Array) -> Array:
-        return (
+        return jax.numpy.array(
             time * mat_time
             + sum(dynamic_params[ii] * mats_dynamic[ii] for ii in range(num_dynamic_params))
             + sum(static_params[ii] * mats_static[ii] for ii in range(num_static_params))
@@ -75,12 +75,12 @@ def test_dynamical_constraints(
         num_dynamic_params,
         num_static_params,
     )
-    constraint = constraint_funcs["fun"](trajectory)
+    constraint = constraint_funcs["fun"](trajectory)  # pylint: disable=not-callable
     assert jax.numpy.abs(constraint).max() < time_step**2
 
     # check derivatives of the constraint function
 
-    constraint_jac = constraint_funcs["jac"](trajectory)
+    constraint_jac = constraint_funcs["jac"](trajectory)  # pylint: disable=not-callable
     constraint_jac_AD = jax.jacfwd(constraint_funcs["fun"])(trajectory)
     assert jax.numpy.allclose(constraint_jac, constraint_jac_AD)
     assert not jax.numpy.any(constraint_funcs["hess"](trajectory))
