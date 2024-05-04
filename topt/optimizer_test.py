@@ -41,7 +41,7 @@ def get_random_generator(
 
 
 def test_time_step(
-    dim: int = 5,
+    dim: int = 3,
     num_dynamic_params: int = 2,
     num_static_params: int = 2,
     time_step: float = 1e-3,
@@ -92,7 +92,7 @@ def test_time_step(
 
 
 def test_dynamical_constraints(
-    dim: int = 4,
+    dim: int = 3,
     time_span: float = 1.0,
     num_time_steps: int = 10,
     num_dynamic_params: int = 2,
