@@ -253,7 +253,7 @@ def get_dynamical_constraints(
     num_dynamic_params: int,
     num_static_params: int,
     generator_jac: SplitParamFunc | None = None,
-) -> dict[str, Callable[[Array], ArrayLike]]:
+) -> dict[str, Callable[[Array], Array]]:
     """Build constraints (and derivatives thereof) induced by equations of motion."""
     state_dim = initial_state.size
     states_size = state_dim * num_time_steps

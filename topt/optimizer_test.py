@@ -84,8 +84,8 @@ def test_time_step(
     data = jax.numpy.concatenate(
         [state_init, state_step, dynamic_params, static_params, jax.numpy.array([time_span])]
     )
-    jacobian_with_autodiff = jax.jacrev(constraint_array_func)(data)
-    assert jax.numpy.allclose(jacobian, jacobian_with_autodiff)
+    jacobian_autodiff = jax.jacrev(constraint_array_func)(data)
+    assert jax.numpy.allclose(jacobian, jacobian_autodiff)
 
 
 def test_dynamical_constraints(
@@ -116,7 +116,7 @@ def test_dynamical_constraints(
         atol=time_step**4,
     )
 
-    # check that constraints are satisfied
+    # check that constraints are satisfied, and that the hessian is zero where it should be
 
     con_funcs = topt.optimizer.get_dynamical_constraints(
         initial_state,
@@ -126,20 +126,25 @@ def test_dynamical_constraints(
         num_static_params,
     )
     constraint = con_funcs["fun"](trajectory)  # pylint: disable=not-callable
+    jacobian = con_funcs["jac"](trajectory)  # pylint: disable=not-callable
+    hessian: Array = con_funcs["hess"](trajectory)  # pylint: disable=not-callable
     assert jax.numpy.abs(constraint).max() < time_step**2
+    # assert not jax.numpy.any(hessian[:, :-1, :-1])
 
     # check correctness of the derivatives of the constraint function
 
     def split_constraint_func(
         states: Array, dynamic_params: Array, static_params: Array, time_span: Array
     ) -> Array:
-        trajectory_data = [
-            states.ravel(),
-            dynamic_params.ravel(),
-            static_params,
-            jax.numpy.array(time_span, ndmin=1),
-        ]
-        return con_funcs["fun"](jax.numpy.concatenate(trajectory_data))  # type:ignore[return-value]
+        trajectory = jax.numpy.concatenate(
+            [
+                states.ravel(),
+                dynamic_params.ravel(),
+                static_params,
+                jax.numpy.array(time_span, ndmin=1),
+            ]
+        )
+        return con_funcs["fun"](trajectory)  # pylint: disable=not-callable
 
     splitter = functools.partial(
         topt.optimizer.split_trajectory,
@@ -148,5 +153,7 @@ def test_dynamical_constraints(
         num_static_params=num_static_params,
     )
     con_funcs_autodiff = topt.optimizer.get_derivatives(split_constraint_func, splitter)
-    assert jax.numpy.allclose(con_funcs["jac"](trajectory), con_funcs_autodiff["jac"](trajectory))
-    assert jax.numpy.allclose(con_funcs["hess"](trajectory), con_funcs_autodiff["hess"](trajectory))
+    jacobian_autodiff = con_funcs_autodiff["jac"](trajectory)  # pylint: disable=not-callable
+    hessian_autodiff = con_funcs_autodiff["hess"](trajectory)  # pylint: disable=not-callable
+    assert jax.numpy.allclose(jacobian, jacobian_autodiff)
+    assert jax.numpy.allclose(hessian, hessian_autodiff)
