@@ -5,7 +5,7 @@ Vector: v = v_R + i v_I --> [ v_R, v_I ]
 Matrix: M = M_R + i M_I --> ⌈ M_R, -M_I ⌉
                             ⌊ M_I,  M_R ⌋
 
-So that: M @ v = (M_R @ v_R - M_I @ v_I) + i (M_I v_R + M_R v_I)
+So that: M v = (M_R v_R - M_I v_I) + i (M_I v_R + M_R v_I)
 """
 
 from __future__ import annotations
