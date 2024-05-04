@@ -116,7 +116,7 @@ def test_dynamical_constraints(
         atol=time_step**4,
     )
 
-    # check that constraints are satisfied, and that the hessian is zero where it should be
+    # check that constraints are satisfied
 
     con_funcs = topt.optimizer.get_dynamical_constraints(
         initial_state,
@@ -129,7 +129,10 @@ def test_dynamical_constraints(
     jacobian = con_funcs["jac"](trajectory)  # pylint: disable=not-callable
     hessian: Array = con_funcs["hess"](trajectory)  # pylint: disable=not-callable
     assert jax.numpy.abs(constraint).max() < time_step**2
-    # assert not jax.numpy.any(hessian[:, :-1, :-1])
+
+    # check that second derivatives with respect to state variables are zero
+
+    assert not jax.numpy.any(hessian[:, : dim * num_time_steps, : dim * num_time_steps])
 
     # check correctness of the derivatives of the constraint function
 
