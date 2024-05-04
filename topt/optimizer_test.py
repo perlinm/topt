@@ -192,7 +192,7 @@ def test_optimize_trajectory_call(
     dynamic_params = trajectory[states.size : -1 - num_static_params].reshape(num_time_steps, -1)
     static_params = trajectory[-1 - num_static_params : -1]
 
-    class Problem:
+    class MockProblem:
         """Mock class for cyipopt.Problem."""
 
         def __init__(self, **kwargs: object) -> None: ...
@@ -204,7 +204,7 @@ def test_optimize_trajectory_call(
             """Return the initial trajectory."""
             return trajectory, collections.defaultdict(int)
 
-    with unittest.mock.patch("cyipopt.Problem", Problem):
+    with unittest.mock.patch("cyipopt.Problem", MockProblem):
         result = topt.optimizer.optimize_trajectory(
             initial_state,
             initial_params,
