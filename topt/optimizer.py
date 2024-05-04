@@ -224,7 +224,6 @@ def get_derivatives(
     function: SplitTrajectoryFunc,
     splitter: Callable[[Array], tuple[Array, Array, Array, Array]],
     *,
-    forward_mode: bool = False,
     jac: SplitTrajectoryFunc | None = None,
     hess: SplitTrajectoryFunc | None = None,
 ) -> dict[str, Callable[[Array], Array]]:
@@ -234,19 +233,16 @@ def get_derivatives(
         return lambda trajectory: function(*splitter(trajectory))
 
     _function = with_full_trajectory(function)
-    if jac is not None:
-        _function_jac = with_full_trajectory(jac)
-    else:
-        jax_jac = jax.jacfwd if forward_mode else jax.jacrev
-        _function_jac = jax_jac(_function)  # type:ignore[operator]
-    if hess is not None:
-        _function_hess = with_full_trajectory(hess)
-    else:
-        _function_hess = jax.jacrev(_function)
+    _function_jac = with_full_trajectory(jac) if jac is not None else jax.jacrev(_function)
+    _function_hess = (
+        with_full_trajectory(hess)
+        if hess is not None
+        else jax.jacrev(_function_jac)  # type:ignore[arg-type]
+    )
     return {
         "fun": jax.jit(_function),
-        "jac": jax.jit(_function_jac),
-        "hess": jax.jit(_function_hess),
+        "jac": jax.jit(_function_jac),  # type:ignore[arg-type]
+        "hess": jax.jit(_function_hess),  # type:ignore[arg-type]
     }
 
 
@@ -361,7 +357,7 @@ def get_dynamical_constraints(
     return {
         "fun": jax.jit(constraints),
         "jac": jax.jit(jacobian),
-        "hess": lambda _: 0,
+        "hess": jax.jit(jax.jacrev(jacobian)),
     }
 
 
@@ -429,7 +425,7 @@ def get_time_step_jacobian_block(
     term_2 = dG_dT @ (generator @ state_m) + (generator @ (dG_dT @ state_m).T).T
     param_block = c_1 * term_1 + c_2 * term_2
 
-    # derivative with respect to total time
+    # derivative with respect to the time_span
     term_1 = generator @ state_p
     term_2 = generator @ (generator @ state_m)
     term_3 = param_block[0, :]
