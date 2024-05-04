@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import collections
 import functools
+import random
+import unittest.mock
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -42,12 +45,12 @@ def test_time_step(
     num_dynamic_params: int = 2,
     num_static_params: int = 2,
     time_step: float = 1e-3,
-    time_span: float = 1.0,
-    time: float = 0.5,
     seed: int = 0,
 ) -> None:
     """Dynamical constraint for a sigle time step."""
     key = jax.random.PRNGKey(seed)
+    time = random.random()
+    time_span = time + random.random()
 
     state_init = jax.random.normal(key, (dim,))
     dynamic_params = jax.random.normal(key, (num_dynamic_params,))
@@ -94,7 +97,7 @@ def test_dynamical_constraints(
     num_time_steps: int = 10,
     num_dynamic_params: int = 2,
     num_static_params: int = 2,
-    seed: int = 0,
+    seed: int = 1,
 ) -> None:
     """Dynamical constraint (and its Jacobian) for a full trajectory."""
     key = jax.random.PRNGKey(seed)
@@ -160,3 +163,59 @@ def test_dynamical_constraints(
     hessian_autodiff = con_funcs_autodiff["hess"](trajectory)  # pylint: disable=not-callable
     assert jax.numpy.allclose(jacobian, jacobian_autodiff)
     assert jax.numpy.allclose(hessian, hessian_autodiff)
+
+
+def test_optimize_trajectory_call(
+    dim: int = 5,
+    num_time_steps: int = 10,
+    num_dynamic_params: int = 2,
+    num_static_params: int = 2,
+    seed: int = 2,
+) -> None:
+    """Mock optimizing a trajectory to ensure that nothing raises an error."""
+    key = jax.random.PRNGKey(seed)
+
+    initial_state = jax.random.normal(key, (dim,))
+    initial_params = jax.random.normal(key, (num_dynamic_params + num_static_params,))
+    generator = get_random_generator(key, dim, num_dynamic_params, num_static_params)
+    time_span = random.random()
+
+    trajectory = topt.optimizer.build_trajectory(
+        initial_state,
+        initial_params,
+        generator,
+        time_span,
+        num_time_steps,
+        num_static_params,
+    )
+    states = trajectory[: dim * num_time_steps].reshape(num_time_steps, dim)
+    dynamic_params = trajectory[states.size : -1 - num_static_params].reshape(num_time_steps, -1)
+    static_params = trajectory[-1 - num_static_params : -1]
+
+    class Problem:
+        """Mock class for cyipopt.Problem."""
+
+        def __init__(self, **kwargs: object) -> None: ...
+
+        def add_option(self, *args: object) -> None:
+            """Placeholder method."""
+
+        def solve(self, *args: object) -> tuple[Array, dict[str, int]]:
+            """Return the initial trajectory."""
+            return trajectory, collections.defaultdict(int)
+
+    with unittest.mock.patch("cyipopt.Problem", Problem):
+        result = topt.optimizer.optimize_trajectory(
+            initial_state,
+            initial_params,
+            generator,
+            time_span,
+            num_time_steps,
+            objective=lambda states, dynamic_params, static_params, time_span: jax.numpy.array([]),
+            num_static_params=num_static_params,
+        )
+        assert jax.numpy.array_equal(result.x.states[0, :], initial_state)
+        assert jax.numpy.array_equal(result.x.states[1:, :], states)
+        assert jax.numpy.array_equal(result.x.dynamic_params, dynamic_params)
+        assert jax.numpy.array_equal(result.x.static_params, static_params)
+        assert jax.numpy.array_equal(result.x.time_span, jax.numpy.array(time_span))

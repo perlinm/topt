@@ -189,11 +189,12 @@ def build_trajectory(
     dynamic_params = params[:num_dynamic_params]
     static_params = params[num_dynamic_params:]
 
+    times = np.linspace(0, time_span, num_time_steps + 1)[1:]
     result = scipy.integrate.solve_ivp(
         lambda time, state: generator(time, dynamic_params, static_params) @ state,
-        (0, time_span),
+        (0, times[-1]),
         initial_state,
-        t_eval=np.linspace(0, time_span, num_time_steps + 1)[1:],
+        t_eval=times,
         rtol=rtol,
         atol=atol,
     )
