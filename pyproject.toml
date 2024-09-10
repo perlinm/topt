@@ -20,7 +20,7 @@ classifiers = [
 include = ["topt/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.9"
 jax = ">=0.4.26"
 jaxlib = ">=0.4.26"
 cyipopt = ">=1.4.1"
